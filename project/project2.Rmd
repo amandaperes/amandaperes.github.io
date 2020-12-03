@@ -1,0 +1,299 @@
+---
+title: 'Project 2: Modeling, Testing, and Predicting'
+author: "Amanda Peres - ASP2635"
+date: '11/15/2020'
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,fig.align="center",warning=FALSE,message=FALSE,fig.width=8, fig.height=5, linewidth=60)
+options(tibble.width = 100,width = 100)
+library(tidyverse)
+```
+
+# Modeling
+
+## Guidelines and Rubric
+
+- **0. (5 pts)** Introduce your dataset and each of your variables (or just your main variables if you have lots) in a paragraph. What are they measuring? How many observations?
+```{R}
+cardiovasc <- read_csv("https://drive.google.com/uc?export=download&id=1m57ntP7oBJ1bL62XwdzZ2292aavet4ax")
+
+cardiovasc <- cardiovasc %>% pivot_longer(col=1, names_to="name", values_to="value") %>% separate("value", into=c("id", "age", "gender", "height", "weight", "ap_hi", "ap_lo", "cholesterol", "gluc", "smoke", "alco", "active", "cardio"), sep=";", convert = T) %>% select(-1, -2) %>% slice(1:5000)
+```
+The cardiovascular disease dataset used in this project was retrieved from Kaggle and compiled by Svetlana Ulianova, a data science student at Ryerson University, and includes 5,000 observations. 
+The dataset has five variables with binary categories which include gender (1 being female and 2 being male) and whether the patient smokes, drinks alcohol, is physically active or was diagnosed with cardiovascular disease. Five other variables are numeric and include the patient's age in days, height in centimeters, weight in kilograms, and systolic and diastolic blood pressure in mmHg. Cholesterol and glucose both contain three categories that are given the numbers 1 through 3, 1 being normal, 2 being above normal, and 3 being well above normal. 
+
+
+- **1. (15 pts)** Perform a MANOVA testing whether any of your numeric variables (or a subset of them, if including them all is unreasonable or doesn't make sense) show a mean difference across levels of one of your categorical variables (3). If they do, perform univariate ANOVAs to find response(s) showing a mean difference across groups (3), and perform post-hoc t tests to find which groups differ (3). Discuss the number of tests you have performed, calculate the probability of at least one type I error (if unadjusted), and adjust the significance level accordingly (bonferroni correction) before discussing significant differences (3). Briefly discuss MANOVA assumptions and whether or not they are likely to have been met (no need for anything too in-depth) (2).
+
+```{R}
+#running manova (1 test)
+man2 <- manova(cbind(age, height, weight, ap_hi, ap_lo)~cholesterol, data=cardiovasc)
+summary(man2)
+
+#running ANOVA (5 tests)
+summary.aov(man2)#all characteristics tested differ by cholesterol level 
+
+
+# post-hoc t-tests (15 tests)
+pairwise.t.test(cardiovasc$age, cardiovasc$cholesterol, p.adj="none")
+pairwise.t.test(cardiovasc$height, cardiovasc$cholesterol, p.adj="none")
+pairwise.t.test(cardiovasc$weight, cardiovasc$cholesterol, p.adj="none")
+pairwise.t.test(cardiovasc$ap_hi, cardiovasc$cholesterol, p.adj="none")
+pairwise.t.test(cardiovasc$ap_lo, cardiovasc$cholesterol, p.adj="none")
+#21 tests total
+
+#pr(making at least one type I error)
+1-(0.95^21)
+
+#Bonferroni adjusted significance level
+0.05/21
+
+#MANOVA Assumptions
+library(rstatix)
+group <- cardiovasc$cholesterol
+DVs <- cardiovasc %>% select(age, height, weight, ap_hi, ap_lo)
+#Test multivariate normality for each group (null: assumption met)
+sapply(split(DVs,group), mshapiro_test)
+#If any p<.05, stop (assumption violated). If not, test homogeneity of covariance matrices
+
+
+```
+
+The MANOVA test shows that the patient’s age, height, weight, systolic blood pressure and diastolic blood pressure show a mean difference between patients with cholesterol levels that are normal (1), above normal (2), and well above normal (3). The univariate ANOVAs reveal that all of these numeric variables show a significant mean difference across groups. In total, 21 tests were performed. Thus, the probability of making at least one type I error is 0.6594, and the adjusted significance level is 0.0024. 
+
+With this adjusted significance level, height and diastolic blood pressure no longer have a significant mean difference across cholesterol levels. In addition, weight and systolic blood pressure no longer have a significant mean difference between patients with above normal cholesterol levels and patients with well above normal cholesterol levels. All other post-hoc tests showed a significant mean difference across cholesterol levels. 
+
+The assumptions for running MANOVA are that the data has multivariate normal distribution and that all groups have homogenous covariance. To assess multivariate normality for each group, a Shapiro-Wilk test was run with the null hypothesis being that the assumption is met. Since the p values for all three cholesterol levels were below 0.05, we have failed the multivariate normality assumption and likely have also failed the assumption of homogeneity of covariance.
+
+
+- **2. (10 pts)** Perform some kind of randomization test on your data (that makes sense). The statistic can be anything you want (mean difference, correlation, F-statistic/ANOVA, chi-squared), etc. State null and alternative hypotheses, perform the test, and interpret the results (7). Create a plot visualizing the null distribution and the test statistic (3).
+
+```{R}
+#mean difference = 13.95482
+cardiovasc %>% group_by(cardio) %>% summarize(mean_systolic_bp = mean(ap_hi)) %>% summarize(diff(mean_systolic_bp))
+#permutation test
+rand_dist <- vector()
+for(i in 1:5000){
+  new<-data.frame(sys_bp=sample(cardiovasc$ap_hi), cardio_disease=cardiovasc$cardio)
+  rand_dist[i]<- mean(new[new$cardio_disease=="1",]$sys_bp)- mean(new[new$cardio_disease=="0",]$sys_bp)}
+#p value = 0
+mean(rand_dist < -13.95482 | rand_dist > 13.95482)
+
+{hist(rand_dist, main="Null Distribution for Differences in Systolic Blood Pressure", xlab="Distribution of Mean Differences"); abline(v = c(13.95482, -13.95482), col="blue")}
+```
+
+The null hypothesis is that the mean systolic blood pressure is the same for those with and without cardiovascular disease. The alternative hypothesis is that the mean systolic blood pressure for those with cardiovascular disease is different from those without cardiovascular disease. 
+The mean difference in systolic blood pressure between those with and without cardiovascular disease is 13.9548. The p-value of the test was 0, suggesting that there is a significant mean difference in systolic blood pressure across both groups. 
+
+- **3. (35 pts)** Build a linear regression model predicting one of your response variables from at least 2 other variables, including their interaction. Mean-center any numeric variables involved in the interaction.
+
+    - Interpret the coefficient estimates (do not discuss significance) (10)
+    - Plot the regression using `ggplot()` using geom_smooth(method="lm"). If your interaction is numeric by numeric, refer to code in the slides to make the plot or check out the `interactions` package, which makes this easier. If you have 3 or more predictors, just chose two of them to plot for convenience. (8)
+    - Check assumptions of linearity, normality, and homoskedasticity either graphically or using a hypothesis test (4)
+    - Regardless, recompute regression results with robust standard errors via `coeftest(..., vcov=vcovHC(...))`. Discuss significance of results, including any changes from before/after robust SEs if applicable. (8)
+    - What proportion of the variation in the outcome does your model explain? (4)
+
+```{R}
+cardiovasc$weight_c <- cardiovasc$weight - mean(cardiovasc$weight, na.rm=T)
+cardiovasc$age_c <- cardiovasc$age - mean(cardiovasc$age, na.rm=T)
+
+fit <- lm(ap_hi~age_c+weight_c*cardio, data=cardiovasc)
+summary(fit)
+
+#ap_hi = 120.6482 + 0.0006(age_c) + 0.1820(weight_c) + (12.2284)cardio + 0.0009(weight_c*cardio)
+
+cardiovasc %>% ggplot(aes(weight_c, ap_hi))+geom_smooth(method = "lm") + geom_point(aes(color=cardio)) + ylim(0,250) + xlab("Weight Centered (Kg)") + ylab("Systolic Blood Pressure (mmHg)")
+
+#Check assumptions
+#Normality
+resids<-fit$residuals
+ks.test(resids, "pnorm", mean=0, sd(resids)) 
+#Linearity
+fitvals <-fit$fitted.values
+ggplot()+geom_point(aes(fitvals,resids)) + geom_hline(yintercept=0, color="red") 
+#Homoskedasticity
+library(sandwich); library(lmtest)
+bptest(fit)
+
+#Regression with robust standard errors
+coeftest(fit, vcov=vcovHC(fit))
+
+#proportion of variation (R^2)
+systolic <- cardiovasc$ap_hi
+sum((fitvals-mean(systolic))^2)/sum((systolic-mean(systolic))^2)
+```
+For patients of average weight and height, the predicted systolic blood pressure for patients without cardiovascular is 120.6482 mmHg while patients with cardiovascular disease have a systolic blood pressure that is 12.2284 mmHg higher. For patients who don’t have cardiovascular disease, every 1 day increase in age for patients of average weight results in a 0.0006 mmHg increase in systolic blood pressure, while every 1 Kg increase in weight for patients of average age results in a 0.1820 mmHg increase. The slope of weight on systolic blood pressure for people with cardiovascular disease is 0.0009 greater than the slope for people without cardiovascular disease.
+
+In order to check for normality, a Kolmogorov-Smirnov test was used. The null hypothesis was that the true distribution is normal, and since the p-value was below 0.05, the model fails the normality assumption. However, the model appears to be roughly linear when assessing the scatter plot. A studentized Breusch-Pagan test was used to assess for homoskedasticity and resulted in a p-value of 0.1746. Thus, the model is homoskedastic. 
+
+Since the model failed the normality assumption, a new regression was carried out using robust standard errors. For both the original model and the model with robust standard errors, all main effects (age, weigh, and presence of cardiovascular disease) were significant, yet the interaction between weight and cardiovascular disease was not significant. Thus, the conclusion remains the same. 
+The proportion of variation that can be explained by the model is 0.0801.
+
+
+
+- **4. (5 pts)** Rerun same regression model (with the interaction), but this time compute bootstrapped standard errors (either by resampling observations or residuals). Discuss any changes you observe in SEs and p-values using these SEs compared to the original SEs and the robust SEs)
+
+```{R}
+cardiovasc$weight_c <- cardiovasc$weight - mean(cardiovasc$weight, na.rm=T)
+cardiovasc$age_c <- cardiovasc$age - mean(cardiovasc$age, na.rm=T)
+
+#bootstrap resampling observations
+samp_distn <- replicate(5000, {
+  boot_dat <- sample_frac(cardiovasc, replace=T)
+  fit1 <- lm(ap_hi~age_c+weight_c*cardio, data=boot_dat)
+  coef(fit1)
+})
+
+samp_distn %>% t %>% as.data.frame %>% summarize_all(sd)
+#SE of intercept is about the same, whereas the SE
+
+
+```
+The bootstrapped SEs found after resampling observations were closer to the robust SEs than the SEs of the original model. For instance, while the original SE for weight was 0.0380, the robust SE was 0.0403 and the bootstrapped SE was 0.0402. For the presence of cardiovascular disease, the original SE was 0.7630 while the robust SE was 0.6580 and the bootstrapped SE was 0.6604. Similarly, the original SE for the interaction between weight and cardiovascular disease was 0.0507, which is slightly higher than the robust SE of 0.0477 and bootstrapped SE of 0.0473. In contrast, the original, robust and bootstrapped SE for age remained the same at 0.0002. 
+
+Being that the robust SEs and the bootstrapped SEs were so similar, it is likely that the conclusion would remain the same with all main effects being significant. 
+
+
+- **5. (25 pts)** Fit a logistic regression model predicting a binary variable (if you don't have one, make/get one) from at least two explanatory variables (interaction not necessary). 
+
+    - Interpret coefficient estimates in context (10)
+    - Report a confusion matrix for your logistic regression (2)
+    - Compute and discuss the Accuracy, Sensitivity (TPR), Specificity (TNR), Precision (PPV), and AUC of your model (5)
+    - Using ggplot, make a density plot of the log-odds (logit) colored/grouped by your binary outcome variable (3)
+    - Generate an ROC curve (plot) and calculate AUC (either manually or with a package); interpret (5)
+    
+```{R}
+fit_log <-glm(cardio~ap_hi+weight, data=cardiovasc, family="binomial")
+exp(coef(fit_log))
+
+#Confusion matrix
+probs<-predict(fit_log, type="response")
+truth <- cardiovasc$cardio
+table(predict=as.numeric(probs>0.5), truth) %>% addmargins
+
+#Classification diagnostics
+class_diag<-function(probs,truth){
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+  f1=2*(sens*ppv)/(sens+ppv)
+  if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE){
+    truth<-as.numeric(truth)-1}
+  #CALCULATE EXACT AUC
+  ord<-order(probs, decreasing=TRUE)
+  probs <- probs[ord]; truth <- truth[ord]
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+  TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+  n <- length(TPR)
+  auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+  data.frame(acc,sens,spec,ppv,f1,auc)
+}
+
+class_diag(probs, cardiovasc$cardio)
+
+cardiovasc$cdv <- as.factor(cardiovasc$cardio)
+cardiovasc$logit<-predict(fit_log,type="link") 
+cardiovasc%>%ggplot(aes(x=logit, fill=cdv))+geom_density(alpha=.75)+
+  theme(legend.position=c(.85,.75))+geom_vline(xintercept=0)+xlab("logit (log-odds)")+ geom_rug(aes(logit,color=cdv)) + xlim(-7,7) + ggtitle("Density Plot of Presence of Cardiovascular Disease (CVD)")
+
+library(plotROC)
+ggplot(fit_log) + geom_roc(aes(d=cardio, m=probs), n.cuts=0) + xlab("False Positive Fraction") + ylab("True Positive Fraction") + ggtitle("ROC Curve")
+```
+The odds of having a cardiovascular disease for patients with a systolic blood pressure of 0 and weight of 0 is 0.6292. While controlling for weight, for every 1 mmHg increase in systolic blood pressure, the odds of having cardiovascular disease increases by a factor of 1.0482. While controlling for systolic blood pressure, for every 1 Kg increase in body weight, the odds of having cardiovascular disease increases by 1.0184.
+
+The overall accuracy is 0.7092, with a true positive rate (sensitivity) of 0.6289 and a true negative rate (specificity) of 0.7894. The precision, or the proportion of patients classified with cardiovascular disease who actually had cardiovascular disease, is 0.7488. 
+
+The density plot shows a lot of overlap between those who have cardiovascular disease and those who do not have cardiovascular disease. Nevertheless, the AUC was 0.7641, suggesting that this model is a fair predictor of cardiovascular disease.
+
+```{R, include=F}
+#having to re-import my dataset because something about the code in question 5 messes it up
+cardiovasc <- read_csv("https://drive.google.com/uc?export=download&id=1m57ntP7oBJ1bL62XwdzZ2292aavet4ax")
+
+cardiovasc <- cardiovasc %>% pivot_longer(col=1, names_to="name", values_to="value") %>% separate("value", into=c("id", "age", "gender", "height", "weight", "ap_hi", "ap_lo", "cholesterol", "gluc", "smoke", "alco", "active", "cardio"), sep=";", convert = T) %>% select(-1, -2) %>% slice(1:5000)
+```
+- **6. (25 pts)** Perform a logistic regression predicting the same binary response variable from *ALL* of the rest of your variables (the more, the better!) 
+    - Fit model, compute in-sample classification diagnostics (Accuracy, Sensitivity, Specificity, Precision, AUC), and interpret (5)
+    - Perform 10-fold (or repeated random sub-sampling) CV with the same model and report average out-of-sample classification diagnostics (Accuracy, Sensitivity, Specificity, Precision, and AUC); interpret AUC and compare with the in-sample metrics (10)
+    - Perform LASSO on the same model/variables. Choose lambda to give the simplest model whose accuracy is near that of the best (i.e., `lambda.1se`). Discuss which variables are retained. (5)
+    - Perform 10-fold CV using only the variables lasso selected: compare model's out-of-sample AUC to that of your logistic regressions above (5)
+```{R}
+fit_log_all <- glm(cardio~., data=cardiovasc, family = "binomial")
+exp(coef(fit_log_all))
+probs_all <-predict(fit_log_all, type="response")
+class_diag(probs_all, cardiovasc$cardio) 
+
+#10-fold CV
+k=10
+data1 <- cardiovasc[sample(nrow(cardiovasc)),]
+folds <- cut(seq(1:nrow(cardiovasc)), breaks=k, labels=F)
+diags <- NULL
+for (i in 1:k){
+  train <-data1[folds!=i,]
+  test <- data1[folds==i,]
+  truth <- test$cardio
+  fit <- glm(cardio~., data=train, family="binomial")
+  probs <- predict(fit, newdata=test, type="response")
+  diags <- rbind(diags, class_diag(probs,truth))
+}
+summarize_all(diags,mean) 
+
+#LASSO
+library(glmnet)
+cardiovasc_response <- as.matrix(cardiovasc$cardio)
+cardiovasc_preds <- model.matrix(cardio~., data=cardiovasc)[,-1]
+cardiovasc_preds <- scale(cardiovasc_preds)
+cv <- cv.glmnet(cardiovasc_preds, cardiovasc_response, family="binomial")
+lasso_fit <- glmnet(cardiovasc_preds, cardiovasc_response, family="binomial", lambda = cv$lambda.1se)
+coef(lasso_fit) #age, weight, ap_hi, ap_lo, cholesterol, and active
+
+#Re-run 10-fold CV
+data2 <- cardiovasc[sample(nrow(cardiovasc)),]
+folds <- cut(seq(1:nrow(cardiovasc)), breaks=k, labels=F)
+diags <- NULL
+for (i in 1:k){
+  train <-data2[folds!=i,]
+  test <- data2[folds==i,]
+  truth <- test$cardio
+  fit <- glm(cardio~age+weight+ap_hi+ap_lo+cholesterol+active, data=train, family="binomial")
+  probs <- predict(fit, newdata=test, type="response")
+  diags <- rbind(diags, class_diag(probs,truth))
+}
+summarize_all(diags,mean) 
+```
+When fitting the logistic regression model using all of the variables in the cardiovascular dataset, the accuracy was 0.7160, the sensitivity was 0.6705, the specificity was 0.7614, and the AUC was 0.7888, suggesting that this model is fair at predicting the presence of cardiovascular disease within the dataset. 
+
+When performing ten-fold cross validation using the same model, the average out-of-sample accuracy was 0.7142, the sensitivity was 0.6665, the specificity was 0.7631, and the AUC was 0.7872. Since the AUC decreased after cross validation, this suggests that the model that includes all of the predictors is overfitted. 
+
+The variables that are retained upon performing LASSO  are age, weight, systolic blood pressure, cholesterol and activity. Upon re-running the ten-fold cross validation using these variables, the out-of-sample AUC increased to 0.7883, which is still slightly lower than the model including all the variables. Thus, this model still might not be the best at making out-of-sample predictions.
+
+
+...
+
+
+
+
+

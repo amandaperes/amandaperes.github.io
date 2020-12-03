@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Amanda Peres" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
+    <title>Project 2: Modeling, Testing, and Predicting</title>
+    <meta name="generator" content="Hugo 0.79.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../../css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="../../post/">BLOG</a></li>
+        
+        <li><a href="../../projects/">PROJECTS</a></li>
+        
+        <li><a href="../../resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="../../project/project2/">Project 2: Modeling, Testing, and Predicting</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         January 1, 0001 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<div id="modeling" class="section level1">
+<h1>Modeling</h1>
+<div id="guidelines-and-rubric" class="section level2">
+<h2>Guidelines and Rubric</h2>
+<ul>
+<li><strong>0. (5 pts)</strong> Introduce your dataset and each of your variables (or just your main variables if you have lots) in a paragraph. What are they measuring? How many observations?</li>
+</ul>
+<pre class="r"><code>cardiovasc &lt;- read_csv(&quot;https://drive.google.com/uc?export=download&amp;id=1m57ntP7oBJ1bL62XwdzZ2292aavet4ax&quot;)
+
+cardiovasc &lt;- cardiovasc %&gt;% pivot_longer(col=1, names_to=&quot;name&quot;, values_to=&quot;value&quot;) %&gt;% separate(&quot;value&quot;, into=c(&quot;id&quot;, &quot;age&quot;, &quot;gender&quot;, &quot;height&quot;, &quot;weight&quot;, &quot;ap_hi&quot;, &quot;ap_lo&quot;, &quot;cholesterol&quot;, &quot;gluc&quot;, &quot;smoke&quot;, &quot;alco&quot;, &quot;active&quot;, &quot;cardio&quot;), sep=&quot;;&quot;, convert = T) %&gt;% select(-1, -2) %&gt;% slice(1:5000)</code></pre>
+<p>The cardiovascular disease dataset used in this project was retrieved from Kaggle and compiled by Svetlana Ulianova, a data science student at Ryerson University, and includes 5,000 observations. The dataset has five variables with binary categories which include gender (1 being female and 2 being male) and whether the patient smokes, drinks alcohol, is physically active or was diagnosed with cardiovascular disease. Five other variables are numeric and include the patient's age in days, height in centimeters, weight in kilograms, and systolic and diastolic blood pressure in mmHg. Cholesterol and glucose both contain three categories that are given the numbers 1 through 3, 1 being normal, 2 being above normal, and 3 being well above normal.</p>
+<ul>
+<li><strong>1. (15 pts)</strong> Perform a MANOVA testing whether any of your numeric variables (or a subset of them, if including them all is unreasonable or doesn't make sense) show a mean difference across levels of one of your categorical variables (3). If they do, perform univariate ANOVAs to find response(s) showing a mean difference across groups (3), and perform post-hoc t tests to find which groups differ (3). Discuss the number of tests you have performed, calculate the probability of at least one type I error (if unadjusted), and adjust the significance level accordingly (bonferroni correction) before discussing significant differences (3). Briefly discuss MANOVA assumptions and whether or not they are likely to have been met (no need for anything too in-depth) (2).</li>
+</ul>
+<pre class="r"><code>#running manova (1 test)
+man2 &lt;- manova(cbind(age, height, weight, ap_hi, ap_lo)~cholesterol, data=cardiovasc)
+summary(man2)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## cholesterol 1 0.063258 67.448 5 4994 &lt; 2.2e-16 ***
+## Residuals 4998
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>#running ANOVA (5 tests)
+summary.aov(man2)#all characteristics tested differ by cholesterol level </code></pre>
+<pre><code>## Response age :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## cholesterol 1 8.5792e+08 857920054 141.13 &lt; 2.2e-16 ***
+## Residuals 4998 3.0382e+10 6078844
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response height :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## cholesterol 1 495 494.80 7.6139 0.005813 **
+## Residuals 4998 324803 64.99
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response weight :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## cholesterol 1 27660 27659.6 129.57 &lt; 2.2e-16 ***
+## Residuals 4998 1066899 213.5
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response ap_hi :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## cholesterol 1 57098 57098 80.525 &lt; 2.2e-16 ***
+## Residuals 4998 3543915 709
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response ap_lo :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## cholesterol 1 221439 221439 5.0688 0.0244 *
+## Residuals 4998 218348218 43687
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code># post-hoc t-tests (15 tests)
+pairwise.t.test(cardiovasc$age, cardiovasc$cholesterol, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  cardiovasc$age and cardiovasc$cholesterol 
+## 
+##   1       2      
+## 2 0.0015  -      
+## 3 &lt; 2e-16 1.9e-13
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(cardiovasc$height, cardiovasc$cholesterol, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  cardiovasc$height and cardiovasc$cholesterol 
+## 
+##   1      2     
+## 2 0.0094 -     
+## 3 0.0410 0.7738
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(cardiovasc$weight, cardiovasc$cholesterol, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  cardiovasc$weight and cardiovasc$cholesterol 
+## 
+##   1       2    
+## 2 2.1e-13 -    
+## 3 &lt; 2e-16 0.015
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(cardiovasc$ap_hi, cardiovasc$cholesterol, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  cardiovasc$ap_hi and cardiovasc$cholesterol 
+## 
+##   1       2    
+## 2 2.2e-09 -    
+## 3 1.6e-14 0.087
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(cardiovasc$ap_lo, cardiovasc$cholesterol, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  cardiovasc$ap_lo and cardiovasc$cholesterol 
+## 
+##   1     2    
+## 2 0.425 -    
+## 3 0.026 0.235
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>#21 tests total
+
+#pr(making at least one type I error)
+1-(0.95^21)</code></pre>
+<pre><code>## [1] 0.6594384</code></pre>
+<pre class="r"><code>#Bonferroni adjusted significance level
+0.05/21</code></pre>
+<pre><code>## [1] 0.002380952</code></pre>
+<pre class="r"><code>#MANOVA Assumptions
+library(rstatix)
+group &lt;- cardiovasc$cholesterol
+DVs &lt;- cardiovasc %&gt;% select(age, height, weight, ap_hi, ap_lo)
+#Test multivariate normality for each group (null: assumption met)
+sapply(split(DVs,group), mshapiro_test)</code></pre>
+<pre><code>##           1            2            3           
+## statistic 0.06613253   0.3802545    0.08764061  
+## p.value   1.534404e-86 2.418611e-43 5.588823e-46</code></pre>
+<pre class="r"><code>#If any p&lt;.05, stop (assumption violated). If not, test homogeneity of covariance matrices</code></pre>
+<p>The MANOVA test shows that the patient’s age, height, weight, systolic blood pressure and diastolic blood pressure show a mean difference between patients with cholesterol levels that are normal (1), above normal (2), and well above normal (3). The univariate ANOVAs reveal that all of these numeric variables show a significant mean difference across groups. In total, 21 tests were performed. Thus, the probability of making at least one type I error is 0.6594, and the adjusted significance level is 0.0024.</p>
+<p>With this adjusted significance level, height and diastolic blood pressure no longer have a significant mean difference across cholesterol levels. In addition, weight and systolic blood pressure no longer have a significant mean difference between patients with above normal cholesterol levels and patients with well above normal cholesterol levels. All other post-hoc tests showed a significant mean difference across cholesterol levels.</p>
+<p>The assumptions for running MANOVA are that the data has multivariate normal distribution and that all groups have homogenous covariance. To assess multivariate normality for each group, a Shapiro-Wilk test was run with the null hypothesis being that the assumption is met. Since the p values for all three cholesterol levels were below 0.05, we have failed the multivariate normality assumption and likely have also failed the assumption of homogeneity of covariance.</p>
+<ul>
+<li><strong>2. (10 pts)</strong> Perform some kind of randomization test on your data (that makes sense). The statistic can be anything you want (mean difference, correlation, F-statistic/ANOVA, chi-squared), etc. State null and alternative hypotheses, perform the test, and interpret the results (7). Create a plot visualizing the null distribution and the test statistic (3).</li>
+</ul>
+<pre class="r"><code>#mean difference = 13.95482
+cardiovasc %&gt;% group_by(cardio) %&gt;% summarize(mean_systolic_bp = mean(ap_hi)) %&gt;% summarize(diff(mean_systolic_bp))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `diff(mean_systolic_bp)`
+##                      &lt;dbl&gt;
+## 1                     14.0</code></pre>
+<pre class="r"><code>#permutation test
+rand_dist &lt;- vector()
+for(i in 1:5000){
+  new&lt;-data.frame(sys_bp=sample(cardiovasc$ap_hi), cardio_disease=cardiovasc$cardio)
+  rand_dist[i]&lt;- mean(new[new$cardio_disease==&quot;1&quot;,]$sys_bp)- mean(new[new$cardio_disease==&quot;0&quot;,]$sys_bp)}
+#p value = 0
+mean(rand_dist &lt; -13.95482 | rand_dist &gt; 13.95482)</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>{hist(rand_dist, main=&quot;Null Distribution for Differences in Systolic Blood Pressure&quot;, xlab=&quot;Distribution of Mean Differences&quot;); abline(v = c(13.95482, -13.95482), col=&quot;blue&quot;)}</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-3-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p>The null hypothesis is that the mean systolic blood pressure is the same for those with and without cardiovascular disease. The alternative hypothesis is that the mean systolic blood pressure for those with cardiovascular disease is different from those without cardiovascular disease. The mean difference in systolic blood pressure between those with and without cardiovascular disease is 13.9548. The p-value of the test was 0, suggesting that there is a significant mean difference in systolic blood pressure across both groups.</p>
+<ul>
+<li><p><strong>3. (35 pts)</strong> Build a linear regression model predicting one of your response variables from at least 2 other variables, including their interaction. Mean-center any numeric variables involved in the interaction.</p>
+<ul>
+<li>Interpret the coefficient estimates (do not discuss significance) (10)</li>
+<li>Plot the regression using <code>ggplot()</code> using geom_smooth(method=&quot;lm&quot;). If your interaction is numeric by numeric, refer to code in the slides to make the plot or check out the <code>interactions</code> package, which makes this easier. If you have 3 or more predictors, just chose two of them to plot for convenience. (8)</li>
+<li>Check assumptions of linearity, normality, and homoskedasticity either graphically or using a hypothesis test (4)</li>
+<li>Regardless, recompute regression results with robust standard errors via <code>coeftest(..., vcov=vcovHC(...))</code>. Discuss significance of results, including any changes from before/after robust SEs if applicable. (8)</li>
+<li>What proportion of the variation in the outcome does your model explain? (4)</li>
+</ul></li>
+</ul>
+<pre class="r"><code>cardiovasc$weight_c &lt;- cardiovasc$weight - mean(cardiovasc$weight, na.rm=T)
+cardiovasc$age_c &lt;- cardiovasc$age - mean(cardiovasc$age, na.rm=T)
+
+fit &lt;- lm(ap_hi~age_c+weight_c*cardio, data=cardiovasc)
+summary(fit)</code></pre>
+<pre><code>##
+## Call:
+## lm(formula = ap_hi ~ age_c + weight_c * cardio, data =
+cardiovasc)
+##
+## Residuals:
+## Min 1Q Median 3Q Max
+## -218.86 -10.30 -0.35 7.15 793.37
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 1.206e+02 5.328e-01 226.429 &lt; 2e-16 ***
+## age_c 5.758e-04 1.501e-04 3.837 0.000126 ***
+## weight_c 1.820e-01 3.796e-02 4.796 1.67e-06 ***
+## cardio 1.223e+01 7.630e-01 16.028 &lt; 2e-16 ***
+## weight_c:cardio 8.514e-04 5.067e-02 0.017 0.986594
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Residual standard error: 25.75 on 4995 degrees of
+freedom
+## Multiple R-squared: 0.08008, Adjusted R-squared: 0.07934
+## F-statistic: 108.7 on 4 and 4995 DF, p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>#ap_hi = 120.6482 + 0.0006(age_c) + 0.1820(weight_c) + (12.2284)cardio + 0.0009(weight_c*cardio)
+
+cardiovasc %&gt;% ggplot(aes(weight_c, ap_hi))+geom_smooth(method = &quot;lm&quot;) + geom_point(aes(color=cardio)) + ylim(0,250) + xlab(&quot;Weight Centered (Kg)&quot;) + ylab(&quot;Systolic Blood Pressure (mmHg)&quot;)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#Check assumptions
+#Normality
+resids&lt;-fit$residuals
+ks.test(resids, &quot;pnorm&quot;, mean=0, sd(resids)) </code></pre>
+<pre><code>## 
+##  One-sample Kolmogorov-Smirnov test
+## 
+## data:  resids
+## D = 0.16197, p-value &lt; 2.2e-16
+## alternative hypothesis: two-sided</code></pre>
+<pre class="r"><code>#Linearity
+fitvals &lt;-fit$fitted.values
+ggplot()+geom_point(aes(fitvals,resids)) + geom_hline(yintercept=0, color=&quot;red&quot;) </code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-4-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#Homoskedasticity
+library(sandwich); library(lmtest)
+bptest(fit)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit
+## BP = 6.3486, df = 4, p-value = 0.1746</code></pre>
+<pre class="r"><code>#Regression with robust standard errors
+coeftest(fit, vcov=vcovHC(fit))</code></pre>
+<pre><code>##
+## t test of coefficients:
+##
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 1.2065e+02 5.3098e-01 227.2202 &lt; 2.2e-16 ***
+## age_c 5.7578e-04 2.1265e-04 2.7077 0.006799 **
+## weight_c 1.8203e-01 4.0304e-02 4.5165 6.433e-06 ***
+## cardio 1.2228e+01 6.5803e-01 18.5833 &lt; 2.2e-16 ***
+## weight_c:cardio 8.5135e-04 4.7399e-02 0.0180 0.985670
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>#proportion of variation (R^2)
+systolic &lt;- cardiovasc$ap_hi
+sum((fitvals-mean(systolic))^2)/sum((systolic-mean(systolic))^2)</code></pre>
+<pre><code>## [1] 0.08007554</code></pre>
+<p>For patients of average weight and height, the predicted systolic blood pressure for patients without cardiovascular is 120.6482 mmHg while patients with cardiovascular disease have a systolic blood pressure that is 12.2284 mmHg higher. For patients who don’t have cardiovascular disease, every 1 day increase in age for patients of average weight results in a 0.0006 mmHg increase in systolic blood pressure, while every 1 Kg increase in weight for patients of average age results in a 0.1820 mmHg increase. The slope of weight on systolic blood pressure for people with cardiovascular disease is 0.0009 greater than the slope for people without cardiovascular disease.</p>
+<p>In order to check for normality, a Kolmogorov-Smirnov test was used. The null hypothesis was that the true distribution is normal, and since the p-value was below 0.05, the model fails the normality assumption. However, the model appears to be roughly linear when assessing the scatter plot. A studentized Breusch-Pagan test was used to assess for homoskedasticity and resulted in a p-value of 0.1746. Thus, the model is homoskedastic.</p>
+<p>Since the model failed the normality assumption, a new regression was carried out using robust standard errors. For both the original model and the model with robust standard errors, all main effects (age, weigh, and presence of cardiovascular disease) were significant, yet the interaction between weight and cardiovascular disease was not significant. Thus, the conclusion remains the same. The proportion of variation that can be explained by the model is 0.0801.</p>
+<ul>
+<li><strong>4. (5 pts)</strong> Rerun same regression model (with the interaction), but this time compute bootstrapped standard errors (either by resampling observations or residuals). Discuss any changes you observe in SEs and p-values using these SEs compared to the original SEs and the robust SEs)</li>
+</ul>
+<pre class="r"><code>cardiovasc$weight_c &lt;- cardiovasc$weight - mean(cardiovasc$weight, na.rm=T)
+cardiovasc$age_c &lt;- cardiovasc$age - mean(cardiovasc$age, na.rm=T)
+
+#bootstrap resampling observations
+samp_distn &lt;- replicate(5000, {
+  boot_dat &lt;- sample_frac(cardiovasc, replace=T)
+  fit1 &lt;- lm(ap_hi~age_c+weight_c*cardio, data=boot_dat)
+  coef(fit1)
+})
+
+samp_distn %&gt;% t %&gt;% as.data.frame %&gt;% summarize_all(sd)</code></pre>
+<pre><code>## (Intercept) age_c weight_c cardio weight_c:cardio
+## 1 0.5286203 0.0002118751 0.0410655 0.6638271 0.04828472</code></pre>
+<pre class="r"><code>#SE of intercept is about the same, whereas the SE</code></pre>
+<p>The bootstrapped SEs found after resampling observations were closer to the robust SEs than the SEs of the original model. For instance, while the original SE for weight was 0.0380, the robust SE was 0.0403 and the bootstrapped SE was 0.0402. For the presence of cardiovascular disease, the original SE was 0.7630 while the robust SE was 0.6580 and the bootstrapped SE was 0.6604. Similarly, the original SE for the interaction between weight and cardiovascular disease was 0.0507, which is slightly higher than the robust SE of 0.0477 and bootstrapped SE of 0.0473. In contrast, the original, robust and bootstrapped SE for age remained the same at 0.0002.</p>
+<p>Being that the robust SEs and the bootstrapped SEs were so similar, it is likely that the conclusion would remain the same with all main effects being significant.</p>
+<ul>
+<li><p><strong>5. (25 pts)</strong> Fit a logistic regression model predicting a binary variable (if you don't have one, make/get one) from at least two explanatory variables (interaction not necessary).</p>
+<ul>
+<li>Interpret coefficient estimates in context (10)</li>
+<li>Report a confusion matrix for your logistic regression (2)</li>
+<li>Compute and discuss the Accuracy, Sensitivity (TPR), Specificity (TNR), Precision (PPV), and AUC of your model (5)</li>
+<li>Using ggplot, make a density plot of the log-odds (logit) colored/grouped by your binary outcome variable (3)</li>
+<li>Generate an ROC curve (plot) and calculate AUC (either manually or with a package); interpret (5)</li>
+</ul></li>
+</ul>
+<pre class="r"><code>fit_log &lt;-glm(cardio~ap_hi+weight, data=cardiovasc, family=&quot;binomial&quot;)
+exp(coef(fit_log))</code></pre>
+<pre><code>##  (Intercept)        ap_hi       weight 
+## 0.0006784373 1.0482397345 1.0183622097</code></pre>
+<pre class="r"><code>#Confusion matrix
+probs&lt;-predict(fit_log, type=&quot;response&quot;)
+truth &lt;- cardiovasc$cardio
+table(predict=as.numeric(probs&gt;0.5), truth) %&gt;% addmargins</code></pre>
+<pre><code>##        truth
+## predict    0    1  Sum
+##     0   1975  927 2902
+##     1    527 1571 2098
+##     Sum 2502 2498 5000</code></pre>
+<pre class="r"><code>#Classification diagnostics
+class_diag&lt;-function(probs,truth){
+  tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+  f1=2*(sens*ppv)/(sens+ppv)
+  if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE){
+    truth&lt;-as.numeric(truth)-1}
+  #CALCULATE EXACT AUC
+  ord&lt;-order(probs, decreasing=TRUE)
+  probs &lt;- probs[ord]; truth &lt;- truth[ord]
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE)
+  TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+  n &lt;- length(TPR)
+  auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+  data.frame(acc,sens,spec,ppv,f1,auc)
+}
+
+class_diag(probs, cardiovasc$cardio)</code></pre>
+<pre><code>## acc sens spec ppv f1 auc
+## 1 0.7092 0.6289031 0.7893685 0.7488084 0.6836379
+0.7640854</code></pre>
+<pre class="r"><code>cardiovasc$cdv &lt;- as.factor(cardiovasc$cardio)
+cardiovasc$logit&lt;-predict(fit_log,type=&quot;link&quot;) 
+cardiovasc%&gt;%ggplot(aes(x=logit, fill=cdv))+geom_density(alpha=.75)+
+  theme(legend.position=c(.85,.75))+geom_vline(xintercept=0)+xlab(&quot;logit (log-odds)&quot;)+ geom_rug(aes(logit,color=cdv)) + xlim(-7,7) + ggtitle(&quot;Density Plot of Presence of Cardiovascular Disease (CVD)&quot;)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-6-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>library(plotROC)
+ggplot(fit_log) + geom_roc(aes(d=cardio, m=probs), n.cuts=0) + xlab(&quot;False Positive Fraction&quot;) + ylab(&quot;True Positive Fraction&quot;) + ggtitle(&quot;ROC Curve&quot;)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-6-2.png" width="768" style="display: block; margin: auto;" /> The odds of having a cardiovascular disease for patients with a systolic blood pressure of 0 and weight of 0 is 0.6292. While controlling for weight, for every 1 mmHg increase in systolic blood pressure, the odds of having cardiovascular disease increases by a factor of 1.0482. While controlling for systolic blood pressure, for every 1 Kg increase in body weight, the odds of having cardiovascular disease increases by 1.0184.</p>
+<p>The overall accuracy is 0.7092, with a true positive rate (sensitivity) of 0.6289 and a true negative rate (specificity) of 0.7894. The precision, or the proportion of patients classified with cardiovascular disease who actually had cardiovascular disease, is 0.7488.</p>
+<p>The density plot shows a lot of overlap between those who have cardiovascular disease and those who do not have cardiovascular disease. Nevertheless, the AUC was 0.7641, suggesting that this model is a fair predictor of cardiovascular disease.</p>
+<ul>
+<li><strong>6. (25 pts)</strong> Perform a logistic regression predicting the same binary response variable from <em>ALL</em> of the rest of your variables (the more, the better!)
+<ul>
+<li>Fit model, compute in-sample classification diagnostics (Accuracy, Sensitivity, Specificity, Precision, AUC), and interpret (5)</li>
+<li>Perform 10-fold (or repeated random sub-sampling) CV with the same model and report average out-of-sample classification diagnostics (Accuracy, Sensitivity, Specificity, Precision, and AUC); interpret AUC and compare with the in-sample metrics (10)</li>
+<li>Perform LASSO on the same model/variables. Choose lambda to give the simplest model whose accuracy is near that of the best (i.e., <code>lambda.1se</code>). Discuss which variables are retained. (5)</li>
+<li>Perform 10-fold CV using only the variables lasso selected: compare model's out-of-sample AUC to that of your logistic regressions above (5)</li>
+</ul></li>
+</ul>
+<pre class="r"><code>fit_log_all &lt;- glm(cardio~., data=cardiovasc, family = &quot;binomial&quot;)
+exp(coef(fit_log_all))</code></pre>
+<pre><code>## (Intercept) age gender height weight ap_hi ap_lo
+## 6.459094e-05 1.000147e+00 9.426804e-01 1.000660e+00
+1.016628e+00 1.040096e+00 1.001796e+00
+## cholesterol gluc smoke alco active
+## 1.756742e+00 8.831927e-01 9.582489e-01 9.441013e-01
+7.843336e-01</code></pre>
+<pre class="r"><code>probs_all &lt;-predict(fit_log_all, type=&quot;response&quot;)
+class_diag(probs_all, cardiovasc$cardio) </code></pre>
+<pre><code>##     acc      sens      spec       ppv        f1       auc
+## 1 0.716 0.6705364 0.7613909 0.7372359 0.7023061 0.7887936</code></pre>
+<pre class="r"><code>#10-fold CV
+k=10
+data1 &lt;- cardiovasc[sample(nrow(cardiovasc)),]
+folds &lt;- cut(seq(1:nrow(cardiovasc)), breaks=k, labels=F)
+diags &lt;- NULL
+for (i in 1:k){
+  train &lt;-data1[folds!=i,]
+  test &lt;- data1[folds==i,]
+  truth &lt;- test$cardio
+  fit &lt;- glm(cardio~., data=train, family=&quot;binomial&quot;)
+  probs &lt;- predict(fit, newdata=test, type=&quot;response&quot;)
+  diags &lt;- rbind(diags, class_diag(probs,truth))
+}
+summarize_all(diags,mean) </code></pre>
+<pre><code>##      acc      sens      spec       ppv       f1       auc
+## 1 0.7162 0.6711527 0.7609966 0.7375454 0.702394 0.7871075</code></pre>
+<pre class="r"><code>#LASSO
+library(glmnet)
+cardiovasc_response &lt;- as.matrix(cardiovasc$cardio)
+cardiovasc_preds &lt;- model.matrix(cardio~., data=cardiovasc)[,-1]
+cardiovasc_preds &lt;- scale(cardiovasc_preds)
+cv &lt;- cv.glmnet(cardiovasc_preds, cardiovasc_response, family=&quot;binomial&quot;)
+lasso_fit &lt;- glmnet(cardiovasc_preds, cardiovasc_response, family=&quot;binomial&quot;, lambda = cv$lambda.1se)
+coef(lasso_fit) #age, weight, ap_hi, ap_lo, cholesterol, and active</code></pre>
+<pre><code>## 12 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                      s0
+## (Intercept)  0.02638858
+## age          0.31143583
+## gender       .         
+## height       .         
+## weight       0.19356771
+## ap_hi        0.92048073
+## ap_lo        0.02260790
+## cholesterol  0.29808627
+## gluc         .         
+## smoke        .         
+## alco         .         
+## active      -0.03981493</code></pre>
+<pre class="r"><code>#Re-run 10-fold CV
+data2 &lt;- cardiovasc[sample(nrow(cardiovasc)),]
+folds &lt;- cut(seq(1:nrow(cardiovasc)), breaks=k, labels=F)
+diags &lt;- NULL
+for (i in 1:k){
+  train &lt;-data2[folds!=i,]
+  test &lt;- data2[folds==i,]
+  truth &lt;- test$cardio
+  fit &lt;- glm(cardio~age+weight+ap_hi+ap_lo+cholesterol+active, data=train, family=&quot;binomial&quot;)
+  probs &lt;- predict(fit, newdata=test, type=&quot;response&quot;)
+  diags &lt;- rbind(diags, class_diag(probs,truth))
+}
+summarize_all(diags,mean) </code></pre>
+<pre><code>## acc sens spec ppv f1 auc
+## 1 0.7132 0.6627555 0.7636753 0.7363256 0.6971221
+0.7880073</code></pre>
+<p>When fitting the logistic regression model using all of the variables in the cardiovascular dataset, the accuracy was 0.7160, the sensitivity was 0.6705, the specificity was 0.7614, and the AUC was 0.7888, suggesting that this model is fair at predicting the presence of cardiovascular disease within the dataset.</p>
+<p>When performing ten-fold cross validation using the same model, the average out-of-sample accuracy was 0.7142, the sensitivity was 0.6665, the specificity was 0.7631, and the AUC was 0.7872. Since the AUC decreased after cross validation, this suggests that the model that includes all of the predictors is overfitted.</p>
+<p>The variables that are retained upon performing LASSO are age, weight, systolic blood pressure, cholesterol and activity. Upon re-running the ten-fold cross validation using these variables, the out-of-sample AUC increased to 0.7883, which is still slightly lower than the model including all the variables. Thus, this model still might not be the best at making out-of-sample predictions.</p>
+<p>...</p>
+</div>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="../../js/docs.min.js"></script>
+<script src="../../js/main.js"></script>
+
+<script src="../../js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>

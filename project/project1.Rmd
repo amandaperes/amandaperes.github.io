@@ -1,0 +1,123 @@
+---
+title: 'Project 1: Exploratory Data Analysis'
+author: "Amanda Peres ASP2635"
+date: ''
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+  pdf_document:
+    toc: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+```
+
+``` {R}
+library(tidyverse)
+us_counties <- read_csv("https://drive.google.com/uc?export=download&id=1klZ0xS5kgalMXxS0NMSw1JYZRNQfI9cW")
+mask_usage <- read_csv("https://drive.google.com/uc?export=download&id=1PUvfxr4U5AxP03mfKYWnsogLtuPmtk0Q")
+population_est <- read_csv("https://drive.google.com/uc?export=download&id=1aNqKCqw_JfTtsTw03MC8qK4L2TSvP5rm")
+
+```
+
+#### 0. Introduction (4  pts)
+
+COVID-19 has emerged at a unique time in our history in which even public health has become politicized. I chose to study the correlation between mask usage and COVID-19 outcomes in an attempt to understand how reduced mask use impacts the number of COVID-19 cases and deaths per U.S. county. The COVID-19 data was collected by the New York Times and includes the total number of cases and deaths as of October 4. The mask frequency survey was also published by the New York Times and was collected through online interviews by the survey firm Dynata in the month of July. Lastly, the population data was published by the U.S. Census Bureau and includes 2019 population estimates per county. 
+
+I expect population size to strongly correlate with the number of COVID-19 cases and deaths. I also predict that counties that have reported higher frequencies in mask use will have better health outcomes during this pandemic, with less people contracting the virus and, as a result,  less fatalities.
+
+#### 1. Tidying: Rearranging Wide/Long (8 pts)
+
+``` {R}
+mask_usage %>% pivot_longer(2:6, names_to="mask_use", values_to="frequency")
+mask_usage %>% pivot_longer(2:6, names_to="mask_use", values_to="frequency") %>% pivot_wider(names_from="mask_use", values_from="frequency")
+
+```
+
+The data from all three sets is already tidy, with every variable having a distinct column. However, as shown above, when I pivot the mask use dataset longer, the mask frequency categories (rarely, sometimes, frequently and always) are put into one big column. Their values are then put into a separate column. However, this makes the data harder to analyze and much, much longer. Therefore, I pivoted the mask use dataset wider again, returning it to its original tidy format. 
+    
+#### 2. Joining/Merging (8 pts)
+
+``` {R}
+population_est <- population_est %>% as.data.frame() %>% mutate(county = str_replace(county, ".", "")) %>% mutate(county = str_replace(county, "County", "")) %>% separate(county, into=c("county", "state"), sep=" , ") %>% unite (county, state, col="location")
+
+#Joining the COVID data 
+covid_data_partial <- us_counties %>% full_join(mask_usage, by=c("fips"="COUNTYFP")) %>% select(-1) %>% unite (county, state, col="location")
+
+#Joining the full dataset
+covid_data_full <- covid_data_partial %>% full_join(population_est, by = "location") %>% select(-(5:8))
+```
+First, I had to alter the "county" variable in the population dataset (population_est) so that I could combine the three datasets by location. I combined county and state information into one variable simply because multiple states have counties with the same name. 
+I then combined the county COVID-19 dataset (us_counties) with the mask frequency survey (mask_usage) using a full join in order to preserve the original data. 
+
+#### 3. Wrangling (40 pts)
+
+
+``` {R}
+covid_data_full <- covid_data_full %>% mutate(score=1*NEVER+2*RARELY+3*SOMETIMES+4*FREQUENTLY+5*ALWAYS) %>% select(-c("NEVER", "RARELY", "SOMETIMES", "FREQUENTLY", "ALWAYS")) %>% separate(location, into=c("county", "state"), sep="_") %>% select(-fips) %>% mutate(case_fatality_ratio = ((deaths)/(cases)))
+
+state_covid <- covid_data_full %>% group_by(state) %>% summarize(avg_score = mean(score), sd_score = sd(score), est_pop = sum(est_pop), cases = (sum(cases)), deaths = (sum(deaths)), case_fatality_ratio = (sum(deaths)/ sum(cases))) 
+glimpse(state_covid)
+
+state_covid %>% summarize("Correlation Between Mask Use and Case Fatality Ratio" = cor(avg_score, case_fatality_ratio))
+
+state_covid %>% arrange(-est_pop)
+
+covid_data_full %>% group_by(state) %>% summarize(avg_score = mean(score), sd_score = sd(score), est_pop = sum(est_pop), cases_per_capita = (sum(cases)/100000), deaths_per_capita = (sum(deaths)/100000)) %>% glimpse
+                            
+texas_covid <- covid_data_full %>% filter(state == "Texas") %>%  arrange(-score)
+glimpse(texas_covid)
+                    
+```
+First, I converted the mask use frequencies into a "mask use score" where counties with higher scores reported higher frequencies of mask usage. I also found the case fatality ratio in order to analyze the mortality rate among counties. I also grouped by state and found the total number of cases and deaths, as well as the average and standard deviation in mask use score for each state. In addition, I also found the correlation between average mask use scores and case fatality ratios across all of the states. Finally, I filtered the complete data set to make a dataset that only included Texas COVID-19 data and was surprised to see that Hays county has the **highest** mask use score out of all other Texas counties!
+
+#### 4. Visualizing (30 pts)
+   
+``` {R}
+ggplot(state_covid, aes(avg_score, cases)) + geom_point(aes(color=est_pop)) + scale_color_gradient(low="yellow", high="red") + ggtitle("COVID-19 Cases and Average Mask Use Scores Among U.S. States")+ xlab("Average Mask Use Score") + ylab("COVID-19 Cases") + theme_minimal() + scale_x_continuous(lim=c(3,5))
+
+ggplot(state_covid, aes(avg_score, case_fatality_ratio)) + geom_point(aes(color=est_pop)) + scale_color_gradient(low="grey", high="purple") + scale_fill_discrete(name="Estimated\nPopulation")+ ggtitle("Percent of Fatal COVID-19 Cases and Average Mask Use Scores\nAmong U.S. States")+ xlab("Average Mask Use Score") + ylab("Percent of COVID-19 Cases\nThat Are Fatal") + theme_minimal() + scale_y_continuous (labels=scales::percent)
+
+
+cormat_state <- state_covid %>% select_if(is.numeric) %>% select(-sd_score) %>% cor(use="pair")
+
+tidycor_state <- cormat_state %>% as.data.frame %>% rownames_to_column("var1") %>% pivot_longer(-1, names_to="var2", values_to="correlation")
+
+tidycor_state %>% ggplot(aes(var1,var2, fill=correlation)) + geom_tile() + scale_fill_gradient2(low="white",high="red")+geom_text(aes(label=round(correlation,2)), color="black", size=4) 
+``` 
+As predicted, there is a strong correlation between population size and COVID-19 cases. There is also a high correlation between population size and COVID-19 deaths. There was also a positive correlation between the case fatality ratio and average mask use score. This could simply be due to the fact that counties experiencing higher mortality rates from COVID-19 are more likely to use masks. 
+
+#### 5. Dimensionality Reduction (20 pts) 
+
+
+``` {R}
+library(cluster)
+library(GGally)
+library(plotly)
+
+pam_dat <- state_covid %>% na.omit() %>% select(-state)
+sil_width <-vector()
+for(i in 2:10){
+  pam_fit <- pam(pam_dat, k=i)
+  sil_width[i] <- pam_fit$silinfo$avg.width
+}
+ggplot() + geom_line(aes(x=1:10, y=sil_width)) + scale_x_continuous(name="k", breaks=1:10)
+
+pam1 <- pam_dat %>% pam(k=5)
+
+pamclust <- pam_dat %>% mutate(cluster=as.factor(pam1$clustering))
+pamclust %>% ggplot(aes(x=est_pop,y=cases, color=cluster)) + geom_point() + xlab("Population Size") + ylab("Total COVID-19 Cases")
+```
+The data forms the clearest clusters when it is grouped in five clusters by total COVID-19 cases and population size. As depicted in the plot above, the amount of cases a state experiences is largely influenced by the size of that population. Therefore, states with similar population sizes tend to have a similar number of cases. California, Texas and Florida, which have population sizes that exceed 20,000,000 and were put into cluster 3, experienced a much higher number of cases compared to states in the other four clusters. 
+
+...
+
+
+
+
+

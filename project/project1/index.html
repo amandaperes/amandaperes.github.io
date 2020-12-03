@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Amanda Peres" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
+    <title>Project 1: Exploratory Data Analysis</title>
+    <meta name="generator" content="Hugo 0.79.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../../css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="../../post/">BLOG</a></li>
+        
+        <li><a href="../../projects/">PROJECTS</a></li>
+        
+        <li><a href="../../resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="../../project/project1/">Project 1: Exploratory Data Analysis</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         January 1, 0001 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<pre class="r"><code>library(tidyverse)
+us_counties &lt;- read_csv(&quot;https://drive.google.com/uc?export=download&amp;id=1klZ0xS5kgalMXxS0NMSw1JYZRNQfI9cW&quot;)
+mask_usage &lt;- read_csv(&quot;https://drive.google.com/uc?export=download&amp;id=1PUvfxr4U5AxP03mfKYWnsogLtuPmtk0Q&quot;)
+population_est &lt;- read_csv(&quot;https://drive.google.com/uc?export=download&amp;id=1aNqKCqw_JfTtsTw03MC8qK4L2TSvP5rm&quot;)</code></pre>
+<div id="introduction-4-pts" class="section level4">
+<h4>0. Introduction (4 pts)</h4>
+<p>COVID-19 has emerged at a unique time in our history in which even public health has become politicized. I chose to study the correlation between mask usage and COVID-19 outcomes in an attempt to understand how reduced mask use impacts the number of COVID-19 cases and deaths per U.S. county. The COVID-19 data was collected by the New York Times and includes the total number of cases and deaths as of October 4. The mask frequency survey was also published by the New York Times and was collected through online interviews by the survey firm Dynata in the month of July. Lastly, the population data was published by the U.S. Census Bureau and includes 2019 population estimates per county.</p>
+<p>I expect population size to strongly correlate with the number of COVID-19 cases and deaths. I also predict that counties that have reported higher frequencies in mask use will have better health outcomes during this pandemic, with less people contracting the virus and, as a result, less fatalities.</p>
+</div>
+<div id="tidying-rearranging-widelong-8-pts" class="section level4">
+<h4>1. Tidying: Rearranging Wide/Long (8 pts)</h4>
+<pre class="r"><code>mask_usage %&gt;% pivot_longer(2:6, names_to = &quot;mask_use&quot;, values_to = &quot;frequency&quot;)</code></pre>
+<pre><code>## # A tibble: 15,710 x 3
+##    COUNTYFP mask_use   frequency
+##    &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
+##  1 01001    NEVER          0.053
+##  2 01001    RARELY         0.074
+##  3 01001    SOMETIMES      0.134
+##  4 01001    FREQUENTLY     0.295
+##  5 01001    ALWAYS         0.444
+##  6 01003    NEVER          0.083
+##  7 01003    RARELY         0.059
+##  8 01003    SOMETIMES      0.098
+##  9 01003    FREQUENTLY     0.323
+## 10 01003    ALWAYS         0.436
+## # … with 15,700 more rows</code></pre>
+<pre class="r"><code>mask_usage %&gt;% pivot_longer(2:6, names_to = &quot;mask_use&quot;, values_to = &quot;frequency&quot;) %&gt;% 
+    pivot_wider(names_from = &quot;mask_use&quot;, values_from = &quot;frequency&quot;)</code></pre>
+<pre><code>## # A tibble: 3,142 x 6
+##    COUNTYFP NEVER RARELY SOMETIMES FREQUENTLY ALWAYS
+##    &lt;chr&gt;    &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;  &lt;dbl&gt;
+##  1 01001    0.053  0.074     0.134      0.295  0.444
+##  2 01003    0.083  0.059     0.098      0.323  0.436
+##  3 01005    0.067  0.121     0.12       0.201  0.491
+##  4 01007    0.02   0.034     0.096      0.278  0.572
+##  5 01009    0.053  0.114     0.18       0.194  0.459
+##  6 01011    0.031  0.04      0.144      0.286  0.5  
+##  7 01013    0.102  0.053     0.257      0.137  0.451
+##  8 01015    0.152  0.108     0.13       0.167  0.442
+##  9 01017    0.117  0.037     0.15       0.136  0.56 
+## 10 01019    0.135  0.027     0.161      0.158  0.52 
+## # … with 3,132 more rows</code></pre>
+<p>The data from all three sets is already tidy, with every variable having a distinct column. However, as shown above, when I pivot the mask use dataset longer, the mask frequency categories (rarely, sometimes, frequently and always) are put into one big column. Their values are then put into a separate column. However, this makes the data harder to analyze and much, much longer. Therefore, I pivoted the mask use dataset wider again, returning it to its original tidy format.</p>
+</div>
+<div id="joiningmerging-8-pts" class="section level4">
+<h4>2. Joining/Merging (8 pts)</h4>
+<pre class="r"><code>population_est &lt;- population_est %&gt;% as.data.frame() %&gt;% mutate(county = str_replace(county, 
+    &quot;.&quot;, &quot;&quot;)) %&gt;% mutate(county = str_replace(county, &quot;County&quot;, 
+    &quot;&quot;)) %&gt;% separate(county, into = c(&quot;county&quot;, &quot;state&quot;), sep = &quot; , &quot;) %&gt;% 
+    unite(county, state, col = &quot;location&quot;)
+
+# Joining the COVID data
+covid_data_partial &lt;- us_counties %&gt;% full_join(mask_usage, by = c(fips = &quot;COUNTYFP&quot;)) %&gt;% 
+    select(-1) %&gt;% unite(county, state, col = &quot;location&quot;)
+
+# Joining the full dataset
+covid_data_full &lt;- covid_data_partial %&gt;% full_join(population_est, 
+    by = &quot;location&quot;) %&gt;% select(-(5:8))</code></pre>
+<p>First, I had to alter the &quot;county&quot; variable in the population dataset (population_est) so that I could combine the three datasets by location. I combined county and state information into one variable simply because multiple states have counties with the same name. I then combined the county COVID-19 dataset (us_counties) with the mask frequency survey (mask_usage) using a full join in order to preserve the original data.</p>
+</div>
+<div id="wrangling-40-pts" class="section level4">
+<h4>3. Wrangling (40 pts)</h4>
+<pre class="r"><code>covid_data_full &lt;- covid_data_full %&gt;% mutate(score = 1 * NEVER + 
+    2 * RARELY + 3 * SOMETIMES + 4 * FREQUENTLY + 5 * ALWAYS) %&gt;% 
+    select(-c(&quot;NEVER&quot;, &quot;RARELY&quot;, &quot;SOMETIMES&quot;, &quot;FREQUENTLY&quot;, &quot;ALWAYS&quot;)) %&gt;% 
+    separate(location, into = c(&quot;county&quot;, &quot;state&quot;), sep = &quot;_&quot;) %&gt;% 
+    select(-fips) %&gt;% mutate(case_fatality_ratio = ((deaths)/(cases)))
+
+state_covid &lt;- covid_data_full %&gt;% group_by(state) %&gt;% summarize(avg_score = mean(score), 
+    sd_score = sd(score), est_pop = sum(est_pop), cases = (sum(cases)), 
+    deaths = (sum(deaths)), case_fatality_ratio = (sum(deaths)/sum(cases)))
+glimpse(state_covid)</code></pre>
+<pre><code>## Rows: 56
+## Columns: 7
+## $ state               &lt;chr&gt; &quot;Alabama&quot;, &quot;Alaska&quot;, &quot;Arizona&quot;, &quot;Arkansas&quot;, &quot;Cali…
+## $ avg_score           &lt;dbl&gt; 3.921522, NA, 4.304400, NA, 4.492431, 4.189328, N…
+## $ sd_score            &lt;dbl&gt; 0.2415388, NA, 0.2565571, NA, 0.2152504, 0.332368…
+## $ est_pop             &lt;dbl&gt; 4903185, NA, 7278717, NA, 39512223, 5758736, NA, …
+## $ cases               &lt;dbl&gt; 158380, 9111, 220403, 86525, 831494, 72929, 58297…
+## $ deaths              &lt;dbl&gt; 2558, 54, 5705, 1407, 16122, 2071, 4513, 645, 629…
+## $ case_fatality_ratio &lt;dbl&gt; 0.016151029, 0.005926902, 0.025884403, 0.01626119…</code></pre>
+<pre class="r"><code>state_covid %&gt;% summarize(`Correlation Between Mask Use and Case Fatality Ratio` = cor(avg_score, 
+    case_fatality_ratio))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `Correlation Between Mask Use and Case Fatality Ratio`
+##                                                    &lt;dbl&gt;
+## 1                                                     NA</code></pre>
+<pre class="r"><code>state_covid %&gt;% arrange(-est_pop)</code></pre>
+<pre><code>## # A tibble: 56 x 7
+##    state          avg_score sd_score  est_pop  cases deaths case_fatality_ratio
+##    &lt;chr&gt;              &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;               &lt;dbl&gt;
+##  1 California          4.49    0.215 39512223 831494  16122              0.0194
+##  2 Texas              NA      NA     28995881     NA     NA             NA     
+##  3 Pennsylvania        4.41    0.235 12801989 166270   8271              0.0497
+##  4 Ohio                3.81    0.297 11689100 157966   4925              0.0312
+##  5 North Carolina      4.25    0.226 10488084 217049   3647              0.0168
+##  6 Arizona             4.30    0.257  7278717 220403   5705              0.0259
+##  7 Indiana             3.87    0.242  6732219 126414   3669              0.0290
+##  8 Colorado            4.19    0.332  5758736  72929   2071              0.0284
+##  9 South Carolina      3.99    0.251  5148714 150891   3442              0.0228
+## 10 Alabama             3.92    0.242  4903185 158380   2558              0.0162
+## # … with 46 more rows</code></pre>
+<pre class="r"><code>covid_data_full %&gt;% group_by(state) %&gt;% summarize(avg_score = mean(score), 
+    sd_score = sd(score), est_pop = sum(est_pop), cases_per_capita = (sum(cases)/1e+05), 
+    deaths_per_capita = (sum(deaths)/1e+05)) %&gt;% glimpse</code></pre>
+<pre><code>## Rows: 56
+## Columns: 6
+## $ state             &lt;chr&gt; &quot;Alabama&quot;, &quot;Alaska&quot;, &quot;Arizona&quot;, &quot;Arkansas&quot;, &quot;Califo…
+## $ avg_score         &lt;dbl&gt; 3.921522, NA, 4.304400, NA, 4.492431, 4.189328, NA,…
+## $ sd_score          &lt;dbl&gt; 0.2415388, NA, 0.2565571, NA, 0.2152504, 0.3323681,…
+## $ est_pop           &lt;dbl&gt; 4903185, NA, 7278717, NA, 39512223, 5758736, NA, NA…
+## $ cases_per_capita  &lt;dbl&gt; 1.58380, 0.09111, 2.20403, 0.86525, 8.31494, 0.7292…
+## $ deaths_per_capita &lt;dbl&gt; 0.02558, 0.00054, 0.05705, 0.01407, 0.16122, 0.0207…</code></pre>
+<pre class="r"><code>texas_covid &lt;- covid_data_full %&gt;% filter(state == &quot;Texas&quot;) %&gt;% 
+    arrange(-score)
+glimpse(texas_covid)</code></pre>
+<pre><code>## Rows: 254
+## Columns: 7
+## $ county              &lt;chr&gt; &quot;Hays&quot;, &quot;El Paso&quot;, &quot;Hudspeth&quot;, &quot;Atascosa&quot;, &quot;Presi…
+## $ state               &lt;chr&gt; &quot;Texas&quot;, &quot;Texas&quot;, &quot;Texas&quot;, &quot;Texas&quot;, &quot;Texas&quot;, &quot;Tex…
+## $ cases               &lt;dbl&gt; 5951, 25206, 62, 1166, 97, 1063, 29750, 1501, 996…
+## $ deaths              &lt;dbl&gt; 66, 531, 3, 32, 7, 18, 429, 77, 40, 0, 35, 1329, …
+## $ est_pop             &lt;dbl&gt; 230191, 839238, 4886, 51153, 6704, 20837, 1273954…
+## $ score               &lt;dbl&gt; 4.815, 4.805, 4.763, 4.751, 4.746, 4.728, 4.710, …
+## $ case_fatality_ratio &lt;dbl&gt; 0.01109057, 0.02106641, 0.04838710, 0.02744425, 0…</code></pre>
+<p>First, I converted the mask use frequencies into a &quot;mask use score&quot; where counties with higher scores reported higher frequencies of mask usage. I also found the case fatality ratio in order to analyze the mortality rate among counties. I also grouped by state and found the total number of cases and deaths, as well as the average and standard deviation in mask use score for each state. In addition, I also found the correlation between average mask use scores and case fatality ratios across all of the states. Finally, I filtered the complete data set to make a dataset that only included Texas COVID-19 data and was surprised to see that Hays county has the <strong>highest</strong> mask use score out of all other Texas counties!</p>
+</div>
+<div id="visualizing-30-pts" class="section level4">
+<h4>4. Visualizing (30 pts)</h4>
+<pre class="r"><code>ggplot(state_covid, aes(avg_score, cases)) + geom_point(aes(color = est_pop)) + 
+    scale_color_gradient(low = &quot;yellow&quot;, high = &quot;red&quot;) + ggtitle(&quot;COVID-19 Cases and Average Mask Use Scores Among U.S. States&quot;) + 
+    xlab(&quot;Average Mask Use Score&quot;) + ylab(&quot;COVID-19 Cases&quot;) + 
+    theme_minimal() + scale_x_continuous(lim = c(3, 5))</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot(state_covid, aes(avg_score, case_fatality_ratio)) + geom_point(aes(color = est_pop)) + 
+    scale_color_gradient(low = &quot;grey&quot;, high = &quot;purple&quot;) + scale_fill_discrete(name = &quot;Estimated\nPopulation&quot;) + 
+    ggtitle(&quot;Percent of Fatal COVID-19 Cases and Average Mask Use Scores\nAmong U.S. States&quot;) + 
+    xlab(&quot;Average Mask Use Score&quot;) + ylab(&quot;Percent of COVID-19 Cases\nThat Are Fatal&quot;) + 
+    theme_minimal() + scale_y_continuous(labels = scales::percent)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-5-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>cormat_state &lt;- state_covid %&gt;% select_if(is.numeric) %&gt;% select(-sd_score) %&gt;% 
+    cor(use = &quot;pair&quot;)
+
+tidycor_state &lt;- cormat_state %&gt;% as.data.frame %&gt;% rownames_to_column(&quot;var1&quot;) %&gt;% 
+    pivot_longer(-1, names_to = &quot;var2&quot;, values_to = &quot;correlation&quot;)
+
+tidycor_state %&gt;% ggplot(aes(var1, var2, fill = correlation)) + 
+    geom_tile() + scale_fill_gradient2(low = &quot;white&quot;, high = &quot;red&quot;) + 
+    geom_text(aes(label = round(correlation, 2)), color = &quot;black&quot;, 
+        size = 4)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-5-3.png" width="672" style="display: block; margin: auto;" /> As predicted, there is a strong correlation between population size and COVID-19 cases. There is also a high correlation between population size and COVID-19 deaths. There was also a positive correlation between the case fatality ratio and average mask use score. This could simply be due to the fact that counties experiencing higher mortality rates from COVID-19 are more likely to use masks.</p>
+</div>
+<div id="dimensionality-reduction-20-pts" class="section level4">
+<h4>5. Dimensionality Reduction (20 pts)</h4>
+<pre class="r"><code>library(cluster)
+library(GGally)
+library(plotly)
+
+pam_dat &lt;- state_covid %&gt;% na.omit() %&gt;% select(-state)
+sil_width &lt;- vector()
+for (i in 2:10) {
+    pam_fit &lt;- pam(pam_dat, k = i)
+    sil_width[i] &lt;- pam_fit$silinfo$avg.width
+}
+ggplot() + geom_line(aes(x = 1:10, y = sil_width)) + scale_x_continuous(name = &quot;k&quot;, 
+    breaks = 1:10)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>pam1 &lt;- pam_dat %&gt;% pam(k = 5)
+
+pamclust &lt;- pam_dat %&gt;% mutate(cluster = as.factor(pam1$clustering))
+pamclust %&gt;% ggplot(aes(x = est_pop, y = cases, color = cluster)) + 
+    geom_point() + xlab(&quot;Population Size&quot;) + ylab(&quot;Total COVID-19 Cases&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-6-2.png" width="672" style="display: block; margin: auto;" /> The data forms the clearest clusters when it is grouped in five clusters by total COVID-19 cases and population size. As depicted in the plot above, the amount of cases a state experiences is largely influenced by the size of that population. Therefore, states with similar population sizes tend to have a similar number of cases. California, Texas and Florida, which have population sizes that exceed 20,000,000 and were put into cluster 3, experienced a much higher number of cases compared to states in the other four clusters.</p>
+<p>...</p>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="../../js/docs.min.js"></script>
+<script src="../../js/main.js"></script>
+
+<script src="../../js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>

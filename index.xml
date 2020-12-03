@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Chris Turner</title>
+    <link>/</link>
+    <description>Recent content on Chris Turner</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Wed, 02 Dec 2020 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Practice Blog Post</title>
+      <link>/post/2020/12/02/practice-blog-post/</link>
+      <pubDate>Wed, 02 Dec 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2020/12/02/practice-blog-post/</guid>
+      <description> THIS IS A TESSSSST! Link to project 1 Link to google
+print(&amp;quot;Hello world!&amp;quot;) ## Hello world! </description>
+    </item>
+    
+    <item>
+      <title>Project 1: Exploratory Data Analysis</title>
+      <link>/project/project1/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project1/</guid>
+      <description>library(tidyverse) us_counties &amp;lt;- read_csv(&amp;quot;https://drive.google.com/uc?export=download&amp;amp;id=1klZ0xS5kgalMXxS0NMSw1JYZRNQfI9cW&amp;quot;) mask_usage &amp;lt;- read_csv(&amp;quot;https://drive.google.com/uc?export=download&amp;amp;id=1PUvfxr4U5AxP03mfKYWnsogLtuPmtk0Q&amp;quot;) population_est &amp;lt;- read_csv(&amp;quot;https://drive.google.com/uc?export=download&amp;amp;id=1aNqKCqw_JfTtsTw03MC8qK4L2TSvP5rm&amp;quot;) 0. Introduction (4 pts) COVID-19 has emerged at a unique time in our history in which even public health has become politicized. I chose to study the correlation between mask usage and COVID-19 outcomes in an attempt to understand how reduced mask use impacts the number of COVID-19 cases and deaths per U.S. county. The COVID-19 data was collected by the New York Times and includes the total number of cases and deaths as of October 4.</description>
+    </item>
+    
+    <item>
+      <title>Project 2: Modeling, Testing, and Predicting</title>
+      <link>/project/project2/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project2/</guid>
+      <description>Modeling Guidelines and Rubric  0. (5 pts) Introduce your dataset and each of your variables (or just your main variables if you have lots) in a paragraph. What are they measuring? How many observations?  cardiovasc &amp;lt;- read_csv(&amp;quot;https://drive.google.com/uc?export=download&amp;amp;id=1m57ntP7oBJ1bL62XwdzZ2292aavet4ax&amp;quot;) cardiovasc &amp;lt;- cardiovasc %&amp;gt;% pivot_longer(col=1, names_to=&amp;quot;name&amp;quot;, values_to=&amp;quot;value&amp;quot;) %&amp;gt;% separate(&amp;quot;value&amp;quot;, into=c(&amp;quot;id&amp;quot;, &amp;quot;age&amp;quot;, &amp;quot;gender&amp;quot;, &amp;quot;height&amp;quot;, &amp;quot;weight&amp;quot;, &amp;quot;ap_hi&amp;quot;, &amp;quot;ap_lo&amp;quot;, &amp;quot;cholesterol&amp;quot;, &amp;quot;gluc&amp;quot;, &amp;quot;smoke&amp;quot;, &amp;quot;alco&amp;quot;, &amp;quot;active&amp;quot;, &amp;quot;cardio&amp;quot;), sep=&amp;quot;;&amp;quot;, convert = T) %&amp;gt;% select(-1, -2) %&amp;gt;% slice(1:5000) The cardiovascular disease dataset used in this project was retrieved from Kaggle and compiled by Svetlana Ulianova, a data science student at Ryerson University, and includes 5,000 observations.</description>
+    </item>
+    
+    <item>
+      <title>Projects</title>
+      <link>/projects/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/projects/</guid>
+      <description> Check out some of my coding projects below:
+ Wrangling &amp;amp; Exploratory Data Analysis
+ Modeling, Inference, Prediction
+  -- </description>
+    </item>
+    
+    <item>
+      <title>Resume</title>
+      <link>/resume/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/resume/</guid>
+      <description>    </description>
+    </item>
+    
+  </channel>
+</rss>
