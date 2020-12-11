@@ -8,13 +8,14 @@
     <language>en-US</language>
     <lastBuildDate>Wed, 02 Dec 2020 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Practice Blog Post</title>
+      <title>Cats &amp; Python</title>
       <link>/post/2020/12/02/practice-blog-post/</link>
       <pubDate>Wed, 02 Dec 2020 00:00:00 +0000</pubDate>
       
       <guid>/post/2020/12/02/practice-blog-post/</guid>
-      <description> THIS IS A TESSSSST! Link to project 1 Link to google
-print(&amp;quot;Hello world!&amp;quot;) ## Hello world! </description>
+      <description>Here are photos of my lovely kitten Mel. If you are wanting to adopt and you&#39;re in Austin, check out Austin Pets Alive!
+Using R studio is wonderful because you can use reticulate to integrate code from R with Python. This is shown below:
+#R code chunk library(reticulate) x &amp;lt;- 100 #Python code chunk x = 3 print(r.x * x) ## 300.0 Isn&#39;t that neat?? Python is also easy to use as a calculator because you can always return the last thing evaluated using &#39;_&#39;.</description>
     </item>
     
     <item>

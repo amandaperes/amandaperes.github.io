@@ -1,20 +1,42 @@
 ---
-title: Practice Blog Post
-author: ''
+title: 'Cats & Python'
+author: 'Amanda Peres'
 date: '2020-12-02'
 slug: practice-blog-post
 categories: []
 tags: []
 description: ''
 ---
-THIS IS A TESSSSST!
-[Link to project 1](projects/project1)
-[Link to google](https://www.google.com)
+Here are photos of my lovely kitten Mel. 
+![](/post/2020-12-02-practice-blog-post_files/Mel Watching Lecture With Me.jpg)
+![](/post/2020-12-02-practice-blog-post_files/Mel in the Hammock.jpg)
+*If you are wanting to adopt and you're in Austin, check out Austin Pets Alive!*
+
+Using R studio is wonderful because you can use **reticulate** to integrate code from R with Python. This is shown below:
 
 ```{R}
-
+#R code chunk
+library(reticulate)
+x <- 100
 ```
 
 ```{python}
-print("Hello world!")
+#Python code chunk
+x = 3
+print(r.x * x)
+```
+
+Isn't that neat?? 
+Python is also easy to use as a calculator because you can always return the last thing evaluated using '_'. For example:
+
+```{python}
+x + 1
+_ * 2
+```
+
+Another unique aspect of Python is that it can be used to carry out multiple assignment. In other words, rather than having to assign a single variable at a time, you can assign multiple variables simultaneously. This is shown below:
+```{python}
+a, b = x+1, x*x
+a
+b
 ```
